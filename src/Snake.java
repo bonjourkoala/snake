@@ -1,115 +1,125 @@
-import java.awt.Graphics;
-import java.awt.event.KeyEvent;
-import java.util.ArrayList;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
 
 public class Snake{
-	private boolean alive, keyPressed;
-	private Segment head;
-	private ArrayList<Segment> segments = new ArrayList<Segment>();
+	private boolean inGame, paused;
+	private ArrayList<Body> segments = new ArrayList<Body>();
+
 	public Snake() {
-		setAlive(true);
-		head = new Head(4,5);
-		segments.add(head);
-		segments.add(new Body(4,4));
-		segments.add(new Tail(4,3));
+		inGame = true;
+		paused = false;
+		//create a default snake of length 3 facing right
+		segments.add(new Body(4,5,2));
+		segments.add(new Body(4,4,2));
+		segments.add(new Body(4,3,2));
 	}
 
+	//draw the body of the snake
 	public void draw(Graphics g) {
-		for(Segment s : segments) {
+		g.setColor(Color.yellow);
+		for(int i=1; i<segments.size(); i++) {
+			Body s = segments.get(i);
 			s.draw(g);
 		}
+		drawHead(g);
+	}
+
+	private void drawHead(Graphics g) {
+		segments.get(0).draw(g,getHead().getDirection());
+		
 	}
 
 	public void keyPressed(KeyEvent key) {
-		setKeyPressed(true);
+		Body head = segments.get(0);
+		int direction = head.getDirection();
 		int d = key.getExtendedKeyCode();
-		if(alive) {
-			if(d==38 && head.getDirection()!=3 && head.getDirection()!=1) {
-				head.snapToGrid(1);
+		if(inGame && !paused) {
+			if(d==38 && direction!=3 && direction!=1) {
 				head.setDirection(1);
 			}
-			if(d==39 && head.getDirection()!=4 && head.getDirection()!=2) {
-				head.snapToGrid(2);
+			if(d==39 && direction!=4 && direction!=2) {
 				head.setDirection(2);
 			}
-			if(d==40 && head.getDirection()!=1 && head.getDirection()!=3) {
-				head.snapToGrid(3);
+			if(d==40 && direction!=1 && direction!=3) {
 				head.setDirection(3);
 			}
-			if(d==37 && head.getDirection()!=2 && head.getDirection()!=4) {
-				head.snapToGrid(4);
+			if(d==37 && direction!=2 && direction!=4) {
 				head.setDirection(4);
 			}
-			update();
-			for(Segment s : segments) {
-				s.snapToGrid(s.getDirection());
-			}
 		}
 	}
 
-	private void update() {
-		for(int i=1; i<segments.size(); i++) {
-			Segment s1 = segments.get(i-1);
-			Segment s = segments.get(i);
-			s.setNextDir(s1.getDirection());
-		}
+	public boolean isInGame() {
+		return inGame;
 	}
 
-	public boolean isAlive() {
-		return alive;
+	public void setInGame(boolean inGame) {
+		this.inGame = inGame;
 	}
 
-	public void setAlive(boolean alive) {
-		this.alive = alive;
+	public Body getHead() {
+		return segments.get(0);
 	}
 
 	public void move() {
-		head.move();
-		for(int i=1; i<segments.size(); i++) {
-			Segment s = segments.get(i);
-			s.move(segments.get(i-1));
-			if(keyPressed)
-				s.setDirection(s.getNextDir());;
+		for(int i=segments.size()-1; i>0; i--) {
+			segments.get(i).setX(segments.get(i-1).getX());
+			segments.get(i).setY(segments.get(i-1).getY());
+			segments.get(i).setDirection(segments.get(i-1).getDirection());
 		}
+		//move based on direction
+		Body head = getHead();
+		int direction = head.getDirection();
+		if (direction==1) 
+			head.setY(head.getY()-GameObject.SQUARE_SIZE);
+		if (direction==2) 
+			head.setX(head.getX()+GameObject.SQUARE_SIZE);
+		if (direction==3) 
+			head.setY(head.getY()+GameObject.SQUARE_SIZE);
+		if (direction==4) 
+			head.setX(head.getX()-GameObject.SQUARE_SIZE);
+	}
+	
+	//check if the snake has hit itself
+	public boolean hitSelf() {
+		int X = getHead().getX();
+		int Y = getHead().getY();
+		for(int i=1; i<segments.size(); i++) {
+			int x = segments.get(i).getX();
+			int y = segments.get(i).getY();
+			if(x==X && y==Y) {
+				inGame = false;
+				return true;
+			}
+		}
+		return false;
 	}
 
-	public Segment getHead() {
-		return head;
-	}
-
-	public void setHead(Segment head) {
-		this.head = head;
-	}
-
-	public boolean isKeyPressed() {
-		return keyPressed;
-	}
-
-	public void setKeyPressed(boolean keyPressed) {
-		this.keyPressed = keyPressed;
-	}
-
+	/**adds a segment to the snake when an apple is eaten according to the 
+	 * direction of the current tail
+	 */
 	public void addSegment() {
-		Segment previous = segments.get(segments.size()-2);
-		if(previous.getDirection()==1)
-			segments.add(segments.size()-1, new Body(
-					previous.getX(),
-					previous.getY()+GameObject.SQUARE_SIZE));	
-		if(previous.getDirection()==2)
-			segments.add(segments.size()-1, new Body(
-					previous.getX()-GameObject.SQUARE_SIZE,
-					previous.getY()));	
-		if(previous.getDirection()==3)
-			segments.add(segments.size()-1, new Body(
-					previous.getX(),
-					previous.getY()-GameObject.SQUARE_SIZE));	
-		if(previous.getDirection()==4)
-			segments.add(segments.size()-1, new Body(
-					previous.getX()+GameObject.SQUARE_SIZE,
-					previous.getY()));	
+		Body last = segments.get(segments.size()-1);
+		int dir = last.getDirection();
+		int r = (last.getY()-SnakeBoard.OFFSET_Y)/GameObject.SQUARE_SIZE;
+		int c = (last.getX()-SnakeBoard.OFFSET_X)/GameObject.SQUARE_SIZE;
+		if (dir==1) 
+			segments.add(new Body(r-1,c,dir));
+		if (dir==2) 
+			segments.add(new Body(r,c+1,dir));
+		if (dir==3) 
+			segments.add(new Body(r+1,c,dir));
+		if (dir==4) 
+			segments.add(new Body(r,c-1,dir));
+	}
+	
+	public boolean isPaused() {
+		return paused;
 	}
 
-
-
+	public void setPaused(boolean paused) {
+		this.paused = paused;
+	}
 
 }

@@ -1,24 +1,20 @@
-import java.awt.Graphics;
-import java.awt.Image;
-import java.io.File;
-import java.io.IOException;
-
-import javax.imageio.ImageIO;
+import java.awt.*;
+import java.io.*;
+import javax.imageio.*;
 
 public class GameObject {
-	private int row, col, x, y;
+	private int x, y;
 	public Image sprites;
-	public static final int SQUARE_SIZE = 36;                                                                                                 
+	public static final int SQUARE_SIZE = 25;                                                                                                 
+	
 	public GameObject(int r, int c) {
 		setUpImages();
-		this.row = r;
-		this.col = c;
-		this.x = r*SQUARE_SIZE+SnakeBoard.OFFSET_X;
-		this.y = c*SQUARE_SIZE+SnakeBoard.OFFSET_Y;
+		this.x = c*SQUARE_SIZE+SnakeBoard.OFFSET_X;
+		this.y = r*SQUARE_SIZE+SnakeBoard.OFFSET_Y;
 	}
+	
 	public void draw(Graphics g) {
-		g.fillRect(col*SQUARE_SIZE+SnakeBoard.OFFSET_X, 
-				row*SQUARE_SIZE+SnakeBoard.OFFSET_Y, SQUARE_SIZE, SQUARE_SIZE);
+		g.fillRect(x,y, SQUARE_SIZE, SQUARE_SIZE);
 	}
 	
 	private void setUpImages() {                                                                                                              
@@ -32,29 +28,27 @@ public class GameObject {
 		}     
 	}
 	
-	public int getRow() {
-		return row;
-	}
-	public void setRow(int row) {
-		this.row = row;
-	}
-	public int getCol() {
-		return col;
-	}
-	public void setCol(int col) {
-		this.col = col;
-	}
-	
 	public int getX() {
 		return x;
 	}
+	
 	public void setX(int x) {
 		this.x = x;
 	}
+	
 	public int getY() {
 		return y;
 	}
+	
 	public void setY(int y) {
 		this.y = y;
+	}
+	
+	public void incrementX() {
+		this.x+=1;
+	}
+	
+	public void incrementY() {
+		this.y+=1;
 	}
 }
