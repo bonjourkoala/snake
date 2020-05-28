@@ -17,12 +17,14 @@ public class Snake{
 
 	//draw the body of the snake
 	public void draw(Graphics g) {
-		g.setColor(Color.yellow);
-		for(int i=1; i<segments.size(); i++) {
-			Body s = segments.get(i);
-			s.draw(g);
+		if(inGame) {
+			g.setColor(Color.yellow);
+			for(int i=1; i<segments.size(); i++) {
+				Body s = segments.get(i);
+				s.draw(g);
+			}
+			drawHead(g);
 		}
-		drawHead(g);
 	}
 
 	private void drawHead(Graphics g) {
@@ -62,24 +64,26 @@ public class Snake{
 	}
 
 	public void move() {
-		for(int i=segments.size()-1; i>0; i--) {
-			segments.get(i).setX(segments.get(i-1).getX());
-			segments.get(i).setY(segments.get(i-1).getY());
-			segments.get(i).setDirection(segments.get(i-1).getDirection());
+		if(inGame) {
+			for(int i=segments.size()-1; i>0; i--) {
+				segments.get(i).setX(segments.get(i-1).getX());
+				segments.get(i).setY(segments.get(i-1).getY());
+				segments.get(i).setDirection(segments.get(i-1).getDirection());
+			}
+			//move based on direction
+			Body head = getHead();
+			int direction = head.getDirection();
+			if (direction==1) 
+				head.setY(head.getY()-GameObject.SQUARE_SIZE);
+			if (direction==2) 
+				head.setX(head.getX()+GameObject.SQUARE_SIZE);
+			if (direction==3) 
+				head.setY(head.getY()+GameObject.SQUARE_SIZE);
+			if (direction==4) 
+				head.setX(head.getX()-GameObject.SQUARE_SIZE);
 		}
-		//move based on direction
-		Body head = getHead();
-		int direction = head.getDirection();
-		if (direction==1) 
-			head.setY(head.getY()-GameObject.SQUARE_SIZE);
-		if (direction==2) 
-			head.setX(head.getX()+GameObject.SQUARE_SIZE);
-		if (direction==3) 
-			head.setY(head.getY()+GameObject.SQUARE_SIZE);
-		if (direction==4) 
-			head.setX(head.getX()-GameObject.SQUARE_SIZE);
 	}
-	
+
 	//check if the snake has hit itself
 	public boolean hitSelf() {
 		int X = getHead().getX();
@@ -112,7 +116,7 @@ public class Snake{
 		if (dir==4) 
 			segments.add(new Body(r,c-1,dir));
 	}
-	
+
 	public boolean isPaused() {
 		return paused;
 	}

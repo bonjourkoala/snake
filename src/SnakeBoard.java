@@ -5,10 +5,10 @@ import java.io.*;
 import javax.imageio.*;
 
 public class SnakeBoard {
-	public static final int OFFSET_X = 40, OFFSET_Y = 80, PAUSE_X = 500,
-			PAUSE_Y = 10, BUTTON_SIZE = 36, RESET_X = 450, RESET_Y = 10,
-			APPLE_X = 40, APPLE_Y = 5, APPLE_SIZE = 20, LEVEL2_THRESHOLD = 2,
-			LEVEL3_THRESHOLD = 5; 
+	public static final int OFFSET_X = 40, OFFSET_Y = 80;
+	private final int PAUSE_X = 500, PAUSE_Y = 10, BUTTON_SIZE = 36, 
+			RESET_X = 450, RESET_Y = 10, APPLE_X = 40, APPLE_Y = 5, 
+			APPLE_SIZE = 20, LEVEL2_THRESHOLD = 2, LEVEL3_THRESHOLD = 5; 
 	public Image pause, play, reset, appl;
 	private GameObject[][] grid;
 	private Apple apple;
@@ -18,12 +18,9 @@ public class SnakeBoard {
 
 	public SnakeBoard(int r, int c) {
 		setUpImages();
-		setPowerupsecs(0);
-		speed = 300;
 		grid = new GameObject[r][c];
 		rows = r;
 		cols = c;
-		level = 1;
 		fill();
 		reset();
 	}
@@ -77,10 +74,12 @@ public class SnakeBoard {
 
 	public void reset() {
 		snake = new Snake();
-		powerupsecs = 0;
+		speed = 300;
+		setPowerupsecs(0);
 		seconds = 0;
 		points = 0;
 		level = 1;
+		clicks = 0;
 		addApple();		
 	}
 
@@ -112,6 +111,14 @@ public class SnakeBoard {
 				count++;
 			}
 		}
+		if(!snake.isInGame()) {
+			for(GameObject[] row : grid) {
+				for(GameObject go : row) {
+					g.setColor(new Color(102,51,0));
+					go.draw(g);
+				}
+			}
+		}
 		//draw the outline of the grid
 		g.setColor(Color.BLACK);
 		g.drawRect(OFFSET_X, OFFSET_Y, cols*GameObject.SQUARE_SIZE, 
@@ -125,7 +132,9 @@ public class SnakeBoard {
 		g.drawImage(reset,RESET_X ,RESET_Y, BUTTON_SIZE, BUTTON_SIZE, null);
 		//draw the apple
 		g.drawImage(appl,APPLE_X ,APPLE_Y, APPLE_SIZE, APPLE_SIZE, null);
-		apple.draw(g, seconds);
+		//draw the apple on the grid
+		if(snake.isInGame())
+			apple.draw(g, seconds);
 		//draw the points
 		g.setColor(Color.red);
 		g.setFont(new Font("Impact", Font.PLAIN, 20));
@@ -160,7 +169,7 @@ public class SnakeBoard {
 
 	public void tick() {
 		seconds++;
-		if(level>=3 && powerup.isActivated()) {
+		if(level>=3) {
 			powerupsecs++;
 			if(powerupsecs == 1000) {
 				addDoublePowerup();
@@ -171,28 +180,32 @@ public class SnakeBoard {
 
 	//moves the snake when the move timer goes off
 	public void moveTick() {
-		snake.move();
-		if(level>=3 && powerupActivated()) {
-			powerup.setActivated(true);
+		if(snake.isInGame()) {
+			snake.move();
+			if(level>=3 && powerupActivated()) {
+				powerup.setActivated(true);
+				powerupsecs = 0;
+			}
+			if(appleEaten()) {
+				points++;
+				addApple();
+				snake.addSegment();
+				if(points==LEVEL2_THRESHOLD) {
+					speed = 250;
+					level=2;
+				}
+				if(points==LEVEL3_THRESHOLD) {
+					speed = 200;
+					level=3;
+					addDoublePowerup();
+				}
+				if(level>=3) {
+					if(powerup.isActivated()) 
+						points++;
+				}
+			}
 		}
-		if(appleEaten()) {
-			points++;
-			addApple();
-			snake.addSegment();
-			if(points==LEVEL2_THRESHOLD) {
-				speed = 250;
-				level=2;
-			}
-			if(points==LEVEL3_THRESHOLD) {
-				speed = 200;
-				level=3;
-				addDoublePowerup();
-			}
-			if(level>=3) {
-				if(powerup.isActivated()) 
-					points++;
-			}
-		}
+		snakeInbounds();
 	}
 
 	//checks if the snake has touched the powerup
@@ -227,7 +240,7 @@ public class SnakeBoard {
 			return false;
 		}
 		if(snake.getHead().getDirection()==2 && 
-				x+GameObject.SQUARE_SIZE>GameObject.SQUARE_SIZE*cols+OFFSET_X) {
+				(x+GameObject.SQUARE_SIZE)>(GameObject.SQUARE_SIZE*cols+OFFSET_X)) {
 			snake.setInGame(false);
 			return false;
 		}

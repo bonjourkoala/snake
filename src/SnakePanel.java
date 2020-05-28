@@ -4,17 +4,30 @@ import javax.swing.*;
 
 public class SnakePanel extends JPanel  {
 	private static final long serialVersionUID = 1L;
+	//must be odd numbers for grid to appear correctly
+	private final int ROWS = 19, COLS = 21;
 	private final int SIZE_PANEL = 600;
+	private SnakeBoard board = new SnakeBoard(ROWS,COLS);
+	private static boolean visible = true;
 	private Timer timer = new Timer(10, null), movetimer = new Timer(300, null);
 
 
 	public static void main(String[] args) {
+		Timer t = new Timer(10, null);
+		t.start();
 		JFrame frame = new JFrame("SNAKE!");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		SnakePanel sp = new SnakePanel();
 		frame.add(sp);
 		frame.pack();
 		frame.setVisible(true);
+		while(t.isRunning()) {
+			System.out.println(visible);
+			if(!SnakePanel.visible){
+				frame.dispose();
+				t.stop();
+			}
+		}
 	}
 
 	public SnakePanel() {
@@ -62,31 +75,32 @@ public class SnakePanel extends JPanel  {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				board.snakeInbounds();
-				if(!board.getSnake().isInGame()) {
-					timer.stop();
-					movetimer.stop();
-					int x = JOptionPane.showConfirmDialog(null, "GAME OVER! \n Play again?" , null, JOptionPane.YES_NO_OPTION);
-					if(x==0) {
-						board.reset();
-						timer.restart();
-						movetimer.restart();
-					}
-					else {
-						setVisible(false);
-					}
-				}
-				else {
+				if(board.getSnake().isInGame()) {
 					board.tick();
+					repaint();
 				}
 			}
 		});
 		movetimer.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				board.moveTick();
-				repaint();
-				movetimer.setDelay(board.getSpeed());
+				if(!board.getSnake().isInGame()) {
+					timer.stop();
+					movetimer.stop();
+					repaint();
+					int x = JOptionPane.showConfirmDialog(null, "GAME OVER! \n Play again?" , null, JOptionPane.YES_NO_OPTION);
+					if(x==0) {
+						board.reset();
+						timer.restart();
+						movetimer.restart();
+					}
+					else 
+						visible = false;
+				}
+				else {
+					board.moveTick();
+					movetimer.setDelay(board.getSpeed());
+				}
 			}
 		});
 		this.addKeyListener(new KeyAdapter() {
@@ -102,9 +116,6 @@ public class SnakePanel extends JPanel  {
 		movetimer.start();
 	}
 
-	//must be odd numbers (r,c)
-	SnakeBoard board = new SnakeBoard(19,21);
-
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		if(!this.hasFocus())
@@ -112,7 +123,6 @@ public class SnakePanel extends JPanel  {
 		board.draw(g);
 		// ask your objects to draw themselves	
 	}
-
 
 }
 
