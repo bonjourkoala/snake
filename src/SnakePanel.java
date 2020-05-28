@@ -3,7 +3,6 @@ import java.awt.event.*;
 import javax.swing.*;
 
 public class SnakePanel extends JPanel  {
-	private static final long serialVersionUID = 1L;
 	//must be odd numbers for grid to appear correctly
 	private final int ROWS = 19, COLS = 21;
 	private final int SIZE_PANEL = 600;
@@ -22,7 +21,6 @@ public class SnakePanel extends JPanel  {
 		frame.pack();
 		frame.setVisible(true);
 		while(t.isRunning()) {
-			System.out.println(visible);
 			if(!SnakePanel.visible){
 				frame.dispose();
 				t.stop();
@@ -37,6 +35,9 @@ public class SnakePanel extends JPanel  {
 			@Override
 			public void mouseClicked(MouseEvent me) {
 				board.justClicked(me);
+				/**if pause/play is clicked, stops or starts timers based 
+				 * on number of clicks 
+				 */
 				if(board.clickedPausePlay(me.getX(), me.getY())) {
 					if(board.getClicks()%2==1) {
 						timer.stop();
@@ -63,25 +64,19 @@ public class SnakePanel extends JPanel  {
 			}
 		});
 		timer.addActionListener(new ActionListener() {
-			/**
-			 * This method is called every time the timer goes off.  The Timer can be scheduled
-			 * to go off at different intervals (shorter intervals makes actions go faster).
-			 * I suggest the following actions:
-			 *    -- Have all objects move (if they are moveable)
-			 *    -- Check for collisions (react accordingly)
-			 *    -- update score, snake, other stuff
-			 *    -- repaint
-			 */
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if(board.getSnake().isInGame()) {
 					board.tick();
 					repaint();
-				}
 			}
 		});
 		movetimer.addActionListener(new ActionListener() {
+			/**   -- Check if the snake is in game
+			 *    -- Call the board's moveTick method
+			 *    -- update timer based on level
+			 *    -- repaint
+			 */
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if(!board.getSnake().isInGame()) {

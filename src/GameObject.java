@@ -51,12 +51,4 @@ public class GameObject {
 	public void setY(int y) {
 		this.y = y;
 	}
-	
-	public void incrementX() {
-		x+=1;
-	}
-	
-	public void incrementY() {
-		y+=1;
-	}
 }

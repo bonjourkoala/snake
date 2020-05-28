@@ -8,7 +8,7 @@ public class SnakeBoard {
 	public static final int OFFSET_X = 40, OFFSET_Y = 80;
 	private final int PAUSE_X = 500, PAUSE_Y = 10, BUTTON_SIZE = 36, 
 			RESET_X = 450, RESET_Y = 10, APPLE_X = 40, APPLE_Y = 5, 
-			APPLE_SIZE = 20, LEVEL2_THRESHOLD = 2, LEVEL3_THRESHOLD = 5; 
+			APPLE_SIZE = 20, LEVEL2_THRESHOLD = 2, LEVEL3_THRESHOLD = 3; 
 	public Image pause, play, reset, appl;
 	private GameObject[][] grid;
 	private Apple apple;
@@ -75,7 +75,7 @@ public class SnakeBoard {
 	public void reset() {
 		snake = new Snake();
 		speed = 300;
-		setPowerupsecs(0);
+		powerupsecs = 0;
 		seconds = 0;
 		points = 0;
 		level = 1;
@@ -144,15 +144,18 @@ public class SnakeBoard {
 		//draw the snake
 		snake.draw(g);
 		//draw powerup
-		if(level>=3) {
+		if(snake.isInGame() && level>=3) {
 			powerup.draw(g,seconds);
-			g.setColor(Color.yellow);
-			new Font("Impact", Font.BOLD, 30);
+			g.setColor(new Color(235, 204, 52));
 			if(powerup.isActivated()) {
-				if(seconds%60<=30)
-					g.drawString("x2",OFFSET_X+APPLE_SIZE+50,25);
-				else
-					g.drawString("x2",OFFSET_X+APPLE_SIZE+50,25);
+				if(seconds%60<=30) {
+					g.setFont(new Font("Impact", Font.BOLD, 55));
+					g.drawString("x2",OFFSET_X+APPLE_SIZE+100,50);
+				}
+				else {
+					g.setFont(new Font("Impact", Font.BOLD, 50));
+					g.drawString("x2",OFFSET_X+APPLE_SIZE+100,50);
+				}
 			}
 		}
 	}
@@ -172,20 +175,26 @@ public class SnakeBoard {
 		if(level>=3) {
 			powerupsecs++;
 			if(powerupsecs == 1000) {
-				addDoublePowerup();
+				newDoublePowerup();
 				powerupsecs = 0;
 			}
 		}
 	}
 
-	//moves the snake when the move timer goes off
 	public void moveTick() {
 		if(snake.isInGame()) {
+			//moves the snake when the move timer goes off
 			snake.move();
+			snake.hitSelf();
+			//activate the powerup if the snake has eaten it
 			if(level>=3 && powerupActivated()) {
 				powerup.setActivated(true);
 				powerupsecs = 0;
 			}
+			/** -- check if the apple is eaten
+			 *  -- add points, check if level increases
+			 *  -- add another point if the powerup is activated
+			 */
 			if(appleEaten()) {
 				points++;
 				addApple();
@@ -197,7 +206,7 @@ public class SnakeBoard {
 				if(points==LEVEL3_THRESHOLD) {
 					speed = 200;
 					level=3;
-					addDoublePowerup();
+					newDoublePowerup();
 				}
 				if(level>=3) {
 					if(powerup.isActivated()) 
@@ -214,13 +223,10 @@ public class SnakeBoard {
 		int powerupY = powerup.getY();
 		int headX = snake.getHead().getX();
 		int headY = snake.getHead().getY();
-		if(headX==powerupX && headY==powerupY) {
-			return true;
-		}
-		return false;
+		return headX==powerupX && headY==powerupY;
 	}
 
-	private void addDoublePowerup() {
+	private void newDoublePowerup() {
 		int r = (int) (Math.random()*rows);
 		int c = (int) (Math.random()*cols);
 		powerup = new DoublePowerup(r,c);
@@ -232,7 +238,7 @@ public class SnakeBoard {
 	}
 
 	//check if snake is inbounds
-	public boolean snakeInbounds() {
+	private boolean snakeInbounds() {
 		int x = snake.getHead().getX();
 		int y = snake.getHead().getY();
 		if(snake.getHead().getDirection()==1 && y<OFFSET_Y) {
@@ -262,15 +268,14 @@ public class SnakeBoard {
 		int appleY = apple.getY();
 		int headX = snake.getHead().getX();
 		int headY = snake.getHead().getY();
-		if(headX==appleX && headY==appleY)
-			return true;
-		return false;
+		return headX==appleX && headY==appleY;
 	}
 
+	//when user clicks on the panel
 	public void justClicked(MouseEvent me) {
 		int x = me.getX();
 		int y = me.getY();
-		//if this is the pause button, pause
+		//if this is the pause/play button, pause
 		if(clickedPausePlay(x,y)) {
 			clicks++;
 			if(clicks%2==1) {
@@ -285,15 +290,13 @@ public class SnakeBoard {
 	}
 
 	public boolean clickedPausePlay(int x, int y) {
-		if(x>PAUSE_X && x<PAUSE_X+BUTTON_SIZE && y>PAUSE_Y && y<PAUSE_Y+BUTTON_SIZE)
-			return true;
-		return false;
+		return x>PAUSE_X && x<PAUSE_X+BUTTON_SIZE && y>PAUSE_Y && 
+				y<PAUSE_Y+BUTTON_SIZE;
 	}
 
 	public boolean clickedReset(int x, int y) {
-		if(x>RESET_X && x<RESET_X+BUTTON_SIZE && y>RESET_Y && y<RESET_Y+BUTTON_SIZE)
-			return true;
-		return false;
+		return x>RESET_X && x<RESET_X+BUTTON_SIZE && y>RESET_Y && 
+				y<RESET_Y+BUTTON_SIZE;
 	}
 
 	public Snake getSnake() {
@@ -304,28 +307,8 @@ public class SnakeBoard {
 		return clicks;
 	}
 
-	public int getLevel() {
-		return level;
-	}
-
 	public int getSpeed() {
 		return speed;
-	}
-
-	public void setSpeed(int speed) {
-		this.speed = speed;
-	}
-
-	public DoublePowerup getPowerup() {
-		return powerup;
-	}
-
-	public int getPowerupsecs() {
-		return powerupsecs;
-	}
-
-	public void setPowerupsecs(int powerupsecs) {
-		this.powerupsecs = powerupsecs;
 	}
 
 }
