@@ -128,16 +128,24 @@ public class SnakeBoard {
 		apple.draw(g, seconds);
 		//draw the points
 		g.setColor(Color.red);
-		Font f = new Font("Impact", 10, 20);
-		g.setFont(f);
+		g.setFont(new Font("Impact", Font.PLAIN, 20));
 		g.drawString(points+"", OFFSET_X+APPLE_SIZE+10, 25);
 		//draw the level
 		drawLevel(g);
 		//draw the snake
 		snake.draw(g);
 		//draw powerup
-		if(level>=3)
+		if(level>=3) {
 			powerup.draw(g,seconds);
+			g.setColor(Color.yellow);
+			new Font("Impact", Font.BOLD, 30);
+			if(powerup.isActivated()) {
+				if(seconds%60<=30)
+					g.drawString("x2",OFFSET_X+APPLE_SIZE+50,25);
+				else
+					g.drawString("x2",OFFSET_X+APPLE_SIZE+50,25);
+			}
+		}
 	}
 
 	private void drawLevel(Graphics g) {
@@ -154,7 +162,7 @@ public class SnakeBoard {
 		seconds++;
 		if(level>=3 && powerup.isActivated()) {
 			powerupsecs++;
-			if(powerupsecs == 7) {
+			if(powerupsecs == 1000) {
 				addDoublePowerup();
 				powerupsecs = 0;
 			}
@@ -299,11 +307,9 @@ public class SnakeBoard {
 		return powerup;
 	}
 
-
 	public int getPowerupsecs() {
 		return powerupsecs;
 	}
-
 
 	public void setPowerupsecs(int powerupsecs) {
 		this.powerupsecs = powerupsecs;
