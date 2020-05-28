@@ -26,8 +26,7 @@ public class Snake{
 	}
 
 	private void drawHead(Graphics g) {
-		segments.get(0).draw(g,getHead().getDirection());
-		
+		segments.get(0).drawHead(g,getHead().getDirection());
 	}
 
 	public void keyPressed(KeyEvent key) {

@@ -6,18 +6,24 @@ import javax.imageio.*;
 
 public class SnakeBoard {
 	public static final int OFFSET_X = 40, OFFSET_Y = 80, PAUSE_X = 500,
-			PAUSE_Y = 10, BUTTON_SIZE = 36, RESET_X = 450, RESET_Y = 10; 
-	public Image pause, play, reset;
+			PAUSE_Y = 10, BUTTON_SIZE = 36, RESET_X = 450, RESET_Y = 10,
+			APPLE_X = 40, APPLE_Y = 5, APPLE_SIZE = 20, LEVEL2_THRESHOLD = 2,
+			LEVEL3_THRESHOLD = 5; 
+	public Image pause, play, reset, appl;
 	private GameObject[][] grid;
 	private Apple apple;
-	private int rows, cols, points, seconds, clicks;
+	private DoublePowerup powerup;
+	private int rows, cols, points, seconds, clicks, level, speed, powerupsecs;
 	private Snake snake;
 
 	public SnakeBoard(int r, int c) {
 		setUpImages();
+		setPowerupsecs(0);
+		speed = 300;
 		grid = new GameObject[r][c];
 		rows = r;
 		cols = c;
+		level = 1;
 		fill();
 		reset();
 	}
@@ -29,10 +35,24 @@ public class SnakeBoard {
 				pause = ((BufferedImage)pause1).getScaledInstance
 						(GameObject.SQUARE_SIZE, GameObject.SQUARE_SIZE, 
 								BufferedImage.SCALE_SMOOTH);
+			}                                                                                                                                 
+			catch (IOException e) {	                                                                                                          
+				e.printStackTrace();                                                                                                          
+			}                                                                                                                                 
+		}     	
+		if(play == null) {                                                                                      
+			try {                                                                                                                             
 				Image play1 = ImageIO.read(new File("play.png"));   
 				play = ((BufferedImage)play1).getScaledInstance
 						(GameObject.SQUARE_SIZE, GameObject.SQUARE_SIZE, 
 								BufferedImage.SCALE_SMOOTH);
+			}                                                                                                                                 
+			catch (IOException e) {	                                                                                                          
+				e.printStackTrace();                                                                                                          
+			}                                                                                                                                 
+		}  
+		if(reset == null) {                                                                                      
+			try {                                                                                                                             
 				Image reset1 = ImageIO.read(new File("reset.png"));   
 				reset = ((BufferedImage)reset1).getScaledInstance
 						(GameObject.SQUARE_SIZE, GameObject.SQUARE_SIZE, 
@@ -41,13 +61,26 @@ public class SnakeBoard {
 			catch (IOException e) {	                                                                                                          
 				e.printStackTrace();                                                                                                          
 			}                                                                                                                                 
-		}     		
+		}  
+		if(appl == null) {                                                                                      
+			try {                                                                                                                             
+				Image sprites = ImageIO.read(new File("snake-graphics.png"));
+				appl = ((BufferedImage)sprites).getSubimage(0,192,64,64).
+						getScaledInstance(GameObject.SQUARE_SIZE, 
+								GameObject.SQUARE_SIZE, BufferedImage.SCALE_SMOOTH);
+			}                                                                                                                                 
+			catch (IOException e) {	                                                                                                          
+				e.printStackTrace();                                                                                                          
+			}                                                                                                                                 
+		}     	
 	}
 
 	public void reset() {
 		snake = new Snake();
+		powerupsecs = 0;
 		seconds = 0;
 		points = 0;
+		level = 1;
 		addApple();		
 	}
 
@@ -66,18 +99,20 @@ public class SnakeBoard {
 	}
 
 	public void draw(Graphics g) {
+		//draw the grid
 		int count = 0;
 		for(int r=0; r<grid.length; r++) {
 			for(int c=0; c<grid[r].length; c++) {
-				GameObject obj = grid[r][c];
+				GameObject tile = grid[r][c];
 				if(count%2==0)
 					g.setColor(new Color(171, 224, 173));
 				if(count%2==1)
 					g.setColor(new Color(87, 160, 89));
-				obj.draw(g);
+				tile.draw(g);
 				count++;
 			}
 		}
+		//draw the outline of the grid
 		g.setColor(Color.BLACK);
 		g.drawRect(OFFSET_X, OFFSET_Y, cols*GameObject.SQUARE_SIZE, 
 				rows*GameObject.SQUARE_SIZE);
@@ -88,27 +123,86 @@ public class SnakeBoard {
 			g.drawImage(play,PAUSE_X ,PAUSE_Y, BUTTON_SIZE, BUTTON_SIZE, null);
 		//draw reset
 		g.drawImage(reset,RESET_X ,RESET_Y, BUTTON_SIZE, BUTTON_SIZE, null);
+		//draw the apple
+		g.drawImage(appl,APPLE_X ,APPLE_Y, APPLE_SIZE, APPLE_SIZE, null);
 		apple.draw(g, seconds);
-		g.setColor(Color.BLUE);
+		//draw the points
+		g.setColor(Color.red);
 		Font f = new Font("Impact", 10, 20);
 		g.setFont(f);
-		g.drawString("Points: "+points+"", OFFSET_X, 40);
+		g.drawString(points+"", OFFSET_X+APPLE_SIZE+10, 25);
+		//draw the level
+		drawLevel(g);
+		//draw the snake
 		snake.draw(g);
+		//draw powerup
+		if(level>=3)
+			powerup.draw(g,seconds);
+	}
+
+	private void drawLevel(Graphics g) {
+		if(level==1)
+			g.setColor(Color.red);
+		if(level==2)
+			g.setColor(Color.orange);
+		if(level==3)
+			g.setColor(Color.green);
+		g.drawString("Level: "+level, OFFSET_X, 50);
 	}
 
 	public void tick() {
 		seconds++;
+		if(level>=3 && powerup.isActivated()) {
+			powerupsecs++;
+			if(powerupsecs == 7) {
+				addDoublePowerup();
+				powerupsecs = 0;
+			}
+		}
 	}
 
-	//moves the snake when the timer goes off
+	//moves the snake when the move timer goes off
 	public void moveTick() {
 		snake.move();
+		if(level>=3 && powerupActivated()) {
+			powerup.setActivated(true);
+		}
 		if(appleEaten()) {
 			points++;
-			apple.setEaten(false);
 			addApple();
 			snake.addSegment();
+			if(points==LEVEL2_THRESHOLD) {
+				speed = 250;
+				level=2;
+			}
+			if(points==LEVEL3_THRESHOLD) {
+				speed = 200;
+				level=3;
+				addDoublePowerup();
+			}
+			if(level>=3) {
+				if(powerup.isActivated()) 
+					points++;
+			}
 		}
+	}
+
+	//checks if the snake has touched the powerup
+	private boolean powerupActivated() {
+		int powerupX = powerup.getX();
+		int powerupY = powerup.getY();
+		int headX = snake.getHead().getX();
+		int headY = snake.getHead().getY();
+		if(headX==powerupX && headY==powerupY) {
+			return true;
+		}
+		return false;
+	}
+
+	private void addDoublePowerup() {
+		int r = (int) (Math.random()*rows);
+		int c = (int) (Math.random()*cols);
+		powerup = new DoublePowerup(r,c);
 	}
 
 	//calls the snake's keyPressed method if a key is pressed 
@@ -156,7 +250,6 @@ public class SnakeBoard {
 		int x = me.getX();
 		int y = me.getY();
 		//if this is the pause button, pause
-		System.out.println(clickedPausePlay(x,y));
 		if(clickedPausePlay(x,y)) {
 			clicks++;
 			if(clicks%2==1) {
@@ -175,19 +268,45 @@ public class SnakeBoard {
 			return true;
 		return false;
 	}
-	
+
 	public boolean clickedReset(int x, int y) {
 		if(x>RESET_X && x<RESET_X+BUTTON_SIZE && y>RESET_Y && y<RESET_Y+BUTTON_SIZE)
 			return true;
 		return false;
 	}
-	
+
 	public Snake getSnake() {
 		return snake;
 	}
 
 	public int getClicks() {
 		return clicks;
+	}
+
+	public int getLevel() {
+		return level;
+	}
+
+	public int getSpeed() {
+		return speed;
+	}
+
+	public void setSpeed(int speed) {
+		this.speed = speed;
+	}
+
+	public DoublePowerup getPowerup() {
+		return powerup;
+	}
+
+
+	public int getPowerupsecs() {
+		return powerupsecs;
+	}
+
+
+	public void setPowerupsecs(int powerupsecs) {
+		this.powerupsecs = powerupsecs;
 	}
 
 }

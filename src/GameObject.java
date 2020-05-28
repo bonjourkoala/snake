@@ -4,7 +4,7 @@ import javax.imageio.*;
 
 public class GameObject {
 	private int x, y;
-	public Image sprites;
+	public static Image sprites, powerup;
 	public static final int SQUARE_SIZE = 25;                                                                                                 
 	
 	public GameObject(int r, int c) {
@@ -17,7 +17,7 @@ public class GameObject {
 		g.fillRect(x,y, SQUARE_SIZE, SQUARE_SIZE);
 	}
 	
-	private void setUpImages() {                                                                                                              
+	private static void setUpImages() {                                                                                                              
 		if(sprites == null) {                                                                                      
 			try {                                                                                                                             
 				sprites = ImageIO.read(new File("snake-graphics.png"));                                                                                                                                                                                                   
@@ -25,7 +25,15 @@ public class GameObject {
 			catch (IOException e) {	                                                                                                          
 				e.printStackTrace();                                                                                                          
 			}                                                                                                                                 
-		}     
+		}   
+		if(powerup == null) {                                                                                      
+			try {                                                                                                                             
+				powerup = ImageIO.read(new File("powerup-double.png"));                                                                                                                                                                                                   
+			}                                                                                                                                 
+			catch (IOException e) {	                                                                                                          
+				e.printStackTrace();                                                                                                          
+			}                                                                                                                                 
+		}   
 	}
 	
 	public int getX() {
@@ -45,10 +53,10 @@ public class GameObject {
 	}
 	
 	public void incrementX() {
-		this.x+=1;
+		x+=1;
 	}
 	
 	public void incrementY() {
-		this.y+=1;
+		y+=1;
 	}
 }

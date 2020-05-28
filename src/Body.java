@@ -21,7 +21,7 @@ public class Body extends GameObject{
 		g.fillOval(getX(), getY(), SQUARE_SIZE, SQUARE_SIZE);
 	}
 
-	public void draw(Graphics g, int dir) {
+	public void drawHead(Graphics g, int dir) {
 		if(dir==1) {
 			int[] x = {getX(),getX()+GameObject.SQUARE_SIZE/2,
 					getX()+GameObject.SQUARE_SIZE};
@@ -48,9 +48,5 @@ public class Body extends GameObject{
 					getY()+GameObject.SQUARE_SIZE};
 			g.fillPolygon(x,y,3);
 		}
-		
 	}
-
 }
-
-

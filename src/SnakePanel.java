@@ -6,19 +6,18 @@ public class SnakePanel extends JPanel  {
 	private static final long serialVersionUID = 1L;
 	private final int SIZE_PANEL = 600;
 	private Timer timer = new Timer(10, null), movetimer = new Timer(300, null);
-	private int speed;
 
 
 	public static void main(String[] args) {
 		JFrame frame = new JFrame("SNAKE!");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.add(new SnakePanel());
+		SnakePanel sp = new SnakePanel();
+		frame.add(sp);
 		frame.pack();
 		frame.setVisible(true);
 	}
 
 	public SnakePanel() {
-		speed = 2;
 		this.setBackground(Color.white);
 		this.setPreferredSize(new Dimension(this.SIZE_PANEL,SIZE_PANEL));
 		this.addMouseListener(new MouseListener() {
@@ -73,12 +72,12 @@ public class SnakePanel extends JPanel  {
 						timer.restart();
 						movetimer.restart();
 					}
-					else
+					else {
 						setVisible(false);
+					}
 				}
 				else {
 					board.tick();
-					repaint();
 				}
 			}
 		});
@@ -86,28 +85,21 @@ public class SnakePanel extends JPanel  {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				board.moveTick();
+				repaint();
+				movetimer.setDelay(board.getSpeed());
 			}
 		});
 		this.addKeyListener(new KeyAdapter() {
-			/**
-			 * This method is called every time a key is pressed.  In this game, what
+			/**This method is called every time a key is pressed.  In this game, what
 			 * happens when a key is pressed?  That behavior should be echoed in the game.
 			 */
 			@Override
 			public void keyPressed(KeyEvent key) {
 				board.keyPressed(key);
-				repaint();
 			}
 		});
 		timer.start();
 		movetimer.start();
-	}
-
-	public int getSpeed() {
-		return speed;
-	}
-	public void setSpeed(int speed) {
-		this.speed = speed;
 	}
 
 	//must be odd numbers (r,c)
