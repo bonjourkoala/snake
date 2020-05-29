@@ -1,22 +1,25 @@
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
+import java.awt.image.*;
 import java.io.*;
 import javax.imageio.*;
 
 public class SnakeBoard {
 	public static final int OFFSET_X = 40, OFFSET_Y = 80;
-	private final int PAUSE_X = 500, PAUSE_Y = 10, BUTTON_SIZE = 36, 
-			RESET_X = 450, RESET_Y = 10, APPLE_X = 40, APPLE_Y = 5, 
-			APPLE_SIZE = 20, LEVEL2_THRESHOLD = 2, LEVEL3_THRESHOLD = 3; 
-	public Image pause, play, reset, appl;
+	private static final int DIRECTIONS_X = 600, PAUSE_X = 500, PAUSE_Y = 10, 
+			BUTTON_SIZE = 36, RESET_X = 450, RESET_Y = 10, APPLE_X = 40, APPLE_Y = 5, 
+			APPLE_SIZE = 20, GOLDAPPLE_X = 100, LEVEL2_THRESHOLD = 15, 
+			LEVEL3_THRESHOLD = 30; 
+	public Image pause, play, reset, appl, goldapple;
 	private GameObject[][] grid;
 	private Apple apple;
 	private DoublePowerup powerup;
-	private int rows, cols, points, seconds, clicks, level, speed, powerupsecs;
+	private int rows, cols, highScore, points, seconds, clicks, level, speed, powerupsecs;
 	private Snake snake;
+	private Color snakeColor = Color.black;
 
 	public SnakeBoard(int r, int c) {
+		highScore = 0;
 		setUpImages();
 		grid = new GameObject[r][c];
 		rows = r;
@@ -69,7 +72,17 @@ public class SnakeBoard {
 			catch (IOException e) {	                                                                                                          
 				e.printStackTrace();                                                                                                          
 			}                                                                                                                                 
-		}     	
+		} 
+		if(goldapple == null) {                                                                                      
+			try {                                                                                                                             
+				Image sprites = ImageIO.read(new File("golden-apple.jpg"));
+				goldapple = ((BufferedImage)sprites).getScaledInstance(GameObject.SQUARE_SIZE, 
+						GameObject.SQUARE_SIZE, BufferedImage.SCALE_SMOOTH);
+			}                                                                                                                                 
+			catch (IOException e) {	                                                                                                          
+				e.printStackTrace();                                                                                                          
+			}                                                                                                                                 
+		} 
 	}
 
 	public void reset() {
@@ -83,12 +96,14 @@ public class SnakeBoard {
 		addApple();		
 	}
 
+	//adds a new apple at a random location
 	private void addApple() {
 		int r = (int) (Math.random()*rows);
 		int c = (int) (Math.random()*cols);
 		apple = new Apple(r,c);
 	}
 
+	//creates the grid
 	private void fill() {
 		for(int r=0; r<grid.length; r++) {
 			for(int c=0; c<grid[r].length; c++) {
@@ -98,7 +113,28 @@ public class SnakeBoard {
 	}
 
 	public void draw(Graphics g) {
-		//draw the grid
+		drawGrid(g);
+		drawPausePlay(g);
+		g.drawImage(reset,RESET_X ,RESET_Y, BUTTON_SIZE, BUTTON_SIZE, null);
+		if(snake.isInGame())
+			apple.draw(g, seconds);
+		drawPoints(g);
+		drawHighScore(g);
+		drawLevel(g);
+		if(snake.isInGame() && level>=3)
+			drawPowerup(g);
+		snake.draw(g, snakeColor);
+		drawDirections(g);
+	}
+
+	private void drawPausePlay(Graphics g) {
+		if(clicks%2==0)
+			g.drawImage(pause,PAUSE_X ,PAUSE_Y, BUTTON_SIZE, BUTTON_SIZE, null);
+		else
+			g.drawImage(play,PAUSE_X ,PAUSE_Y, BUTTON_SIZE, BUTTON_SIZE, null);		
+	}
+
+	private void drawGrid(Graphics g) {
 		int count = 0;
 		for(int r=0; r<grid.length; r++) {
 			for(int c=0; c<grid[r].length; c++) {
@@ -110,54 +146,50 @@ public class SnakeBoard {
 				tile.draw(g);
 				count++;
 			}
-		}
-		if(!snake.isInGame()) {
-			for(GameObject[] row : grid) {
-				for(GameObject go : row) {
-					g.setColor(new Color(102,51,0));
-					go.draw(g);
-				}
-			}
-		}
-		//draw the outline of the grid
-		g.setColor(Color.BLACK);
-		g.drawRect(OFFSET_X, OFFSET_Y, cols*GameObject.SQUARE_SIZE, 
-				rows*GameObject.SQUARE_SIZE);
-		//draw pause/play
-		if(clicks%2==0)
-			g.drawImage(pause,PAUSE_X ,PAUSE_Y, BUTTON_SIZE, BUTTON_SIZE, null);
-		else
-			g.drawImage(play,PAUSE_X ,PAUSE_Y, BUTTON_SIZE, BUTTON_SIZE, null);
-		//draw reset
-		g.drawImage(reset,RESET_X ,RESET_Y, BUTTON_SIZE, BUTTON_SIZE, null);
-		//draw the apple
+		}		
+	}
+
+	private void drawPoints(Graphics g) {
 		g.drawImage(appl,APPLE_X ,APPLE_Y, APPLE_SIZE, APPLE_SIZE, null);
-		//draw the apple on the grid
-		if(snake.isInGame())
-			apple.draw(g, seconds);
-		//draw the points
 		g.setColor(Color.red);
 		g.setFont(new Font("Impact", Font.PLAIN, 20));
-		g.drawString(points+"", OFFSET_X+APPLE_SIZE+10, 25);
-		//draw the level
-		drawLevel(g);
-		//draw the snake
-		snake.draw(g);
-		//draw powerup
-		if(snake.isInGame() && level>=3) {
-			powerup.draw(g,seconds);
-			g.setColor(new Color(235, 204, 52));
-			if(powerup.isActivated()) {
-				if(seconds%60<=30) {
-					g.setFont(new Font("Impact", Font.BOLD, 55));
-					g.drawString("x2",OFFSET_X+APPLE_SIZE+100,50);
-				}
-				else {
-					g.setFont(new Font("Impact", Font.BOLD, 50));
-					g.drawString("x2",OFFSET_X+APPLE_SIZE+100,50);
-				}
+		g.drawString(points+"", OFFSET_X+APPLE_SIZE+10, 25);		
+	}
+
+	private void drawHighScore(Graphics g) {
+		g.drawImage(goldapple,GOLDAPPLE_X ,APPLE_Y, APPLE_SIZE, APPLE_SIZE, null);
+		g.setColor(new Color(247,190,61));
+		g.setFont(new Font("Impact", Font.PLAIN, 20));
+		g.drawString(highScore+"", GOLDAPPLE_X+APPLE_SIZE+10, 25);
+	}
+
+	private void drawPowerup(Graphics g) {
+		powerup.draw(g,seconds);
+		g.setColor(new Color(235, 204, 52));
+		if(powerup.isActivated()) {
+			if(seconds%60<=30) {
+				g.setFont(new Font("Impact", Font.BOLD, 55));
+				g.drawString("x2",OFFSET_X+APPLE_SIZE+300,50);
 			}
-		}
+			else {
+				g.setFont(new Font("Impact", Font.BOLD, 50));
+				g.drawString("x2",OFFSET_X+APPLE_SIZE+305,50);
+			}
+		}		
+	}
+
+	private void drawDirections(Graphics g) {
+		g.setColor(Color.black);
+		g.setFont(new Font("Comic Sans MS", Font.BOLD, 20));
+		g.drawString("Controls:", DIRECTIONS_X+75, OFFSET_Y);
+		g.setFont(new Font("Comic Sans MS", Font.PLAIN, 20));
+		g.drawString("Move up: W/up arrow key", DIRECTIONS_X, OFFSET_Y+20);
+		g.drawString("Move down: S/down arrow key", DIRECTIONS_X, OFFSET_Y+40);
+		g.drawString("Move right: D/right arrow key", DIRECTIONS_X, OFFSET_Y+60);
+		g.drawString("Move left: A/left arrow key", DIRECTIONS_X, OFFSET_Y+80);
+		g.drawString("Play/Pause: P ", DIRECTIONS_X, OFFSET_Y+100);
+		g.drawString("Reset: R", DIRECTIONS_X, OFFSET_Y+120);
+		g.drawString("Exit: X", DIRECTIONS_X, OFFSET_Y+140);
 	}
 
 	private void drawLevel(Graphics g) {
@@ -170,16 +202,19 @@ public class SnakeBoard {
 		g.drawString("Level: "+level, OFFSET_X, 50);
 	}
 
+
+	//controls apple's flashing and length of powerup appearance
 	public void tick() {
 		seconds++;
 		if(level>=3) {
 			powerupsecs++;
-			if(powerupsecs == 1000) {
+			if(powerupsecs == 500) {
 				newDoublePowerup();
 				powerupsecs = 0;
 			}
 		}
 	}
+
 
 	public void moveTick() {
 		if(snake.isInGame()) {
@@ -212,6 +247,8 @@ public class SnakeBoard {
 					if(powerup.isActivated()) 
 						points++;
 				}
+				if(points > highScore)
+					highScore = points;
 			}
 		}
 		snakeInbounds();
@@ -226,6 +263,8 @@ public class SnakeBoard {
 		return headX==powerupX && headY==powerupY;
 	}
 
+
+	//creates a new double powerup at a random location
 	private void newDoublePowerup() {
 		int r = (int) (Math.random()*rows);
 		int c = (int) (Math.random()*cols);
@@ -237,6 +276,7 @@ public class SnakeBoard {
 		snake.keyPressed(key);		
 	}
 
+	//returns true if the snake's head is inbounds, false otherwise
 	//check if snake is inbounds
 	private boolean snakeInbounds() {
 		int x = snake.getHead().getX();
@@ -309,6 +349,22 @@ public class SnakeBoard {
 
 	public int getSpeed() {
 		return speed;
+	}
+
+	public void setSpeed(int speed) {
+		this.speed = speed;
+	}
+
+	public Color getSnakeColor() {
+		return snakeColor;
+	}
+
+	public void setSnakeColor(Color snakeColor) {
+		this.snakeColor = snakeColor;
+	}
+
+	public int getHighScore() {
+		return highScore;
 	}
 
 }

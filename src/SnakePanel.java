@@ -4,21 +4,31 @@ import javax.swing.*;
 
 public class SnakePanel extends JPanel  {
 	//must be odd numbers for grid to appear correctly
-	private final int ROWS = 19, COLS = 21;
-	private final int SIZE_PANEL = 600;
+	private final int ROWS = 21, COLS = 21, SIZE_PANEL = 900;
 	private SnakeBoard board = new SnakeBoard(ROWS,COLS);
 	private static boolean visible = true;
+	private boolean play;
 	private Timer timer = new Timer(10, null), movetimer = new Timer(300, null);
 
 
 	public static void main(String[] args) {
 		Timer t = new Timer(10, null);
 		t.start();
-		JFrame frame = new JFrame("SNAKE!");
+		JFrame frame = new JFrame("Snake!");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		SnakePanel sp = new SnakePanel();
 		frame.add(sp);
 		frame.pack();
+		//TODO create toolbar with functional buttons
+		/*
+		JToolBar tb = new JToolBar();
+		JButton b1 = new JButton("button 1"); 
+		JButton b2 = new JButton("button 2"); 
+		sp.add(b1);
+		sp.add(b2);
+		tb.add(sp);
+		frame.add(tb,BorderLayout.NORTH);
+		*/
 		frame.setVisible(true);
 		while(t.isRunning()) {
 			if(!SnakePanel.visible){
@@ -29,6 +39,7 @@ public class SnakePanel extends JPanel  {
 	}
 
 	public SnakePanel() {
+		setColors();
 		this.setBackground(Color.white);
 		this.setPreferredSize(new Dimension(this.SIZE_PANEL,SIZE_PANEL));
 		this.addMouseListener(new MouseListener() {
@@ -67,8 +78,8 @@ public class SnakePanel extends JPanel  {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-					board.tick();
-					repaint();
+				board.tick();
+				repaint();
 			}
 		});
 		movetimer.addActionListener(new ActionListener() {
@@ -79,7 +90,7 @@ public class SnakePanel extends JPanel  {
 			 */
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if(!board.getSnake().isInGame()) {
+				if(visible && !board.getSnake().isInGame()) {
 					timer.stop();
 					movetimer.stop();
 					repaint();
@@ -105,10 +116,36 @@ public class SnakePanel extends JPanel  {
 			@Override
 			public void keyPressed(KeyEvent key) {
 				board.keyPressed(key);
+				//press p to pause/play
+				if(key.getExtendedKeyCode()==80) {
+					if(play) {
+						play = false;
+						timer.stop();
+						movetimer.stop();
+					}
+					else {
+						play = true;
+						timer.restart();
+						movetimer.restart();
+					}
+				}
+				//press x to exit
+				if(key.getExtendedKeyCode()==88) {
+					visible = false;
+				}
+				//press r to reset
+				if(key.getExtendedKeyCode()==82) {
+					board.reset();
+				}
 			}
 		});
 		timer.start();
 		movetimer.start();
+	}
+
+	private void setColors() {
+		board.setSnakeColor(JColorChooser.showDialog(getComponentPopupMenu(), 
+				"Choose a color for your snake.", Color.black));
 	}
 
 	public void paintComponent(Graphics g) {

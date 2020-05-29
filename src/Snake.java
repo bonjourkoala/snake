@@ -10,32 +10,36 @@ public class Snake{
 		inGame = true;
 		paused = false;
 		//create a default snake of length 3 facing right
-		segments.add(new Body(4,5,2));
-		segments.add(new Body(4,4,2));
-		segments.add(new Body(4,3,2));
+		segments.add(new Body(9,6,2));
+		segments.add(new Body(9,5,2));
+		segments.add(new Body(9,4,2));
 	}
 
 	//draw the body of the snake
-	public void draw(Graphics g) {
+	public void draw(Graphics g, Color c) {
+		g.setColor(c);
 		if(inGame) {
-			g.setColor(Color.yellow);
 			for(int i=1; i<segments.size(); i++) {
 				Body s = segments.get(i);
 				s.draw(g);
 			}
-			drawHead(g);
+			segments.get(0).drawHead(g,getHead().getDirection());
 		}
 	}
 
-	private void drawHead(Graphics g) {
-		segments.get(0).drawHead(g,getHead().getDirection());
-	}
-
 	public void keyPressed(KeyEvent key) {
-		Body head = segments.get(0);
-		int direction = head.getDirection();
+		Body head = getHead();
+		int direction = getHead().getDirection();
 		int d = key.getExtendedKeyCode();
 		if(inGame && !paused) {
+			if(d==87 && direction!=3 && direction!=1)
+				head.setDirection(1);
+			if(d==68 && direction!=4 && direction!=2) 
+				head.setDirection(2);
+			if(d==83 && direction!=1 && direction!=3) 
+				head.setDirection(3);
+			if(d==65 && direction!=2 && direction!=4) 
+				head.setDirection(4);
 			if(d==38 && direction!=3 && direction!=1) {
 				head.setDirection(1);
 			}
@@ -64,24 +68,22 @@ public class Snake{
 	}
 
 	public void move() {
-		if(inGame) {
-			for(int i=segments.size()-1; i>0; i--) {
-				segments.get(i).setX(segments.get(i-1).getX());
-				segments.get(i).setY(segments.get(i-1).getY());
-				segments.get(i).setDirection(segments.get(i-1).getDirection());
-			}
-			//move based on direction
-			Body head = getHead();
-			int direction = head.getDirection();
-			if (direction==1) 
-				head.setY(head.getY()-GameObject.SQUARE_SIZE);
-			if (direction==2) 
-				head.setX(head.getX()+GameObject.SQUARE_SIZE);
-			if (direction==3) 
-				head.setY(head.getY()+GameObject.SQUARE_SIZE);
-			if (direction==4) 
-				head.setX(head.getX()-GameObject.SQUARE_SIZE);
+		for(int i=segments.size()-1; i>0; i--) {
+			segments.get(i).setX(segments.get(i-1).getX());
+			segments.get(i).setY(segments.get(i-1).getY());
+			segments.get(i).setDirection(segments.get(i-1).getDirection());
 		}
+		//move based on direction
+		Body head = getHead();
+		int direction = getHead().getDirection();
+		if (direction==1) 
+			head.setY(head.getY()-GameObject.SQUARE_SIZE);
+		if (direction==2) 
+			head.setX(head.getX()+GameObject.SQUARE_SIZE);
+		if (direction==3) 
+			head.setY(head.getY()+GameObject.SQUARE_SIZE);
+		if (direction==4) 
+			head.setX(head.getX()-GameObject.SQUARE_SIZE);
 	}
 
 	//check if the snake has hit itself
